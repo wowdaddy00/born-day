@@ -4,31 +4,35 @@ from sqlalchemy import create_engine, text
 
 app = Flask(__name__)
 
-# ✅ DB 파일명 확인: 이름이 다르다면 여기서 수정하세요
+# ✅ DB 파일명 확인
 engine = create_engine("sqlite:///celebrities_full.db", echo=False)
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     result = {}
     if request.method == "POST":
-        # HTML 폼에서 'birthdate' 필드로 YYYY-MM-DD 형식의 문자열을 받습니다.
-        birth_str_input = request.form.get("birthdate")
+        # 🎯 드롭다운으로부터 값 받아오기
+        year = request.form.get("year")
+        month = request.form.get("month")
+        day = request.form.get("day")
+
+        # ✅ 유효성 검사
+        if not (year and month and day):
+            result = {"error": "생년, 월, 일을 모두 선택해 주세요."}
+            return render_template("index.html", result=result)
 
         try:
-            # 받은 문자열을 datetime.date 객체로 변환
-            birth_date = datetime.strptime(birth_str_input, "%Y-%m-%d").date()
-            birth_str = birth_str_input # 원본 문자열을 결과에 사용
+            birth_str = f"{year}-{int(month):02d}-{int(day):02d}"
+            birth_date = datetime.strptime(birth_str, "%Y-%m-%d").date()
 
             today = date.today()
             weekday_name = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"]
             weekday = weekday_name[birth_date.weekday()]
 
             age_years = today.year - birth_date.year
-            # 만 나이 계산 (생일이 지났는지 여부 확인)
             if (today.month, today.day) < (birth_date.month, birth_date.day):
                 age_years -= 1
 
-            # 한국 나이 계산 (만 나이 + 1)
             korean_age = today.year - birth_date.year + 1
 
             days_lived = (today - birth_date).days
@@ -40,8 +44,7 @@ def index():
                 next_birthday = next_birthday.replace(year=today.year + 1)
             days_to_birthday = (next_birthday - today).days
 
-            # ✅ MM-DD만 추출해서 DB에서 비교
-            birth_mmdd = birth_date.strftime("%m-%d") # datetime 객체에서 MM-DD 형식으로 변환
+            birth_mmdd = birth_date.strftime("%m-%d")
 
             with engine.connect() as conn:
                 query = text("SELECT name FROM celebrities WHERE birth_mmdd = :mmdd")
@@ -68,11 +71,12 @@ def index():
             }
 
         except ValueError:
-            result = {"error": "날짜 형식이 잘못되었습니다. 다시 입력해 주세요."}
+            result = {"error": "유효하지 않은 날짜입니다. 다시 확인해 주세요."}
         except Exception as e:
             result = {"error": f"오류가 발생했습니다: {e}"}
 
     return render_template("index.html", result=result)
+
 
 # 🌟 별자리 계산 함수
 def get_zodiac_sign(month, day):
@@ -89,12 +93,12 @@ def get_zodiac_sign(month, day):
         ((10, 24), "천칭자리"),
         ((11, 23), "전갈자리"),
         ((12, 22), "사수자리"),
-        ((12, 31), "염소자리"), # 12월 22일 이후는 다음 해 1월 19일까지 염소자리
+        ((12, 31), "염소자리"),
     ]
     for (m, d), name in zodiac:
         if (month, day) <= (m, d):
             return name
-    return "염소자리"  # 기본값 (이 부분은 사실상 12/22~12/31에 해당)
+    return "염소자리"
 
 # 🐉 띠 계산 함수
 def get_chinese_zodiac(year):
@@ -102,8 +106,6 @@ def get_chinese_zodiac(year):
         "쥐", "소", "호랑이", "토끼", "용", "뱀",
         "말", "양", "원숭이", "닭", "개", "돼지"
     ]
-    # 1900년을 기준으로 쥐띠가 시작한다고 가정 (1900 % 12 = 4, 쥐띠)
-    # 실제 띠는 입춘 기준이므로 단순 연도 계산은 오차가 있을 수 있음
     return zodiacs[(year - 1900) % 12]
 
 # 👶 세대 구분 함수
