@@ -25,8 +25,10 @@ def index():
             weekday = weekday_name[birth_date.weekday()]
             
             age_years = today.year - birth_date.year
-            if (today.month, today.day) < (birth_date.month, birth_date.day):
-                age_years -= 1
+            if (today.month, today.day) >= (birth_date.month, birth_date.day):
+                korean_age = today.year - birth_date.year
+            else:
+                korean_age = today.year - birth_date.year - 1
                 
             days_lived = (today - birth_date).days
             total_hours = days_lived * 24
@@ -49,6 +51,7 @@ def index():
                 "birth_str": birth_str,
                 "weekday": weekday,
                 "age_years": age_years,
+                "korean_age": korean_age,
                 "days_lived": days_lived,
                 "total_hours": total_hours,
                 "total_minutes": total_minutes,
