@@ -39,6 +39,11 @@
                 <p>총 시간: <span class="highlight">{{ "{:,}".format(result.total_hours) }}시간</span></p>
                 <p>총 분: <span class="highlight">{{ "{:,}".format(result.total_minutes) }}분</span></p>
                 <p>다음 생일까지 남은 날: <span class="highlight">{{ result.days_to_birthday }}일</span></p>
+                
+                <h3>🌟 운세 정보</h3>
+                <p>당신의 별자리: <span class="highlight">{{ result.zodiac_sign }}</span></p>
+                <p>띠(간지): <span class="highlight">{{ result.chinese_zodiac }}</span></p>
+                <p>세대 구분: <span class="highlight">{{ result.generation }}</span></p>
             </div>
         {% endif %}
         {% if result.celebrities %}
