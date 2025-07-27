@@ -3,27 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>내가 태어난 날, 세계는 어땠을까?</title>
-    <style>
-        body { font-family: sans-serif; text-align: center; padding: 50px; background-color: #f7f9fc; }
-        input, button { padding: 10px; font-size: 16px; }
-        .result-card {
-            background: white;
-            max-width: 500px;
-            margin: 20px auto;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            text-align: left;
-        }
-        .result-card h3 {
-            margin-top: 0;
-            color: #333;
-        }
-        .highlight {
-            font-weight: bold;
-            color: #0055aa;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <h1>내가 태어난 날, 세계는 어땠을까?</h1>
