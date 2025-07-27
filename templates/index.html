@@ -27,6 +27,17 @@
                 <p>다음 생일까지 남은 날: <span class="highlight">{{ result.days_to_birthday }}일</span></p>
             </div>
         {% endif %}
+        {% if result.celebrities %}
+            <div class="result-card">
+                <h3>같은 날 태어난 유명인</h3>
+                <ul>
+                {% for celeb in result.celebrities %}
+                    <li>{{ celeb }}</li>
+                {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
     {% endif %}
 </body>
+</html>
 </html>
