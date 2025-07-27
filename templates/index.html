@@ -4,8 +4,25 @@
     <meta charset="UTF-8">
     <title>내가 태어난 날, 세계는 어땠을까?</title>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 50px; }
+        body { font-family: sans-serif; text-align: center; padding: 50px; background-color: #f7f9fc; }
         input, button { padding: 10px; font-size: 16px; }
+        .result-card {
+            background: white;
+            max-width: 500px;
+            margin: 20px auto;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            text-align: left;
+        }
+        .result-card h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .highlight {
+            font-weight: bold;
+            color: #0055aa;
+        }
     </style>
 </head>
 <body>
@@ -15,10 +32,21 @@
         <input type="date" name="birthdate" required>
         <button type="submit">확인</button>
     </form>
+
     {% if result %}
-        <hr>
-        <h2>{{ result }}</h2>
+        {% if result.error %}
+            <p style="color:red;">{{ result.error }}</p>
+        {% else %}
+            <div class="result-card">
+                <h3>기본 정보</h3>
+                <p><span class="highlight">{{ result.birth_str }}</span>은 <span class="highlight">{{ result.weekday }}</span>이었습니다.</p>
+                <p>현재 만 나이: <span class="highlight">{{ result.age_years }}세</span></p>
+                <p>지금까지 살아온 날: <span class="highlight">{{ result.days_lived }}일</span></p>
+                <p>총 시간: <span class="highlight">{{ result.total_hours | number }}시간</span></p>
+                <p>총 분: <span class="highlight">{{ result.total_minutes | number }}분</span></p>
+                <p>다음 생일까지 남은 날: <span class="highlight">{{ result.days_to_birthday }}일</span></p>
+            </div>
+        {% endif %}
     {% endif %}
 </body>
 </html>
-
