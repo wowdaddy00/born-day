@@ -4,8 +4,8 @@ from sqlalchemy import create_engine, text
 
 app = Flask(__name__)
 
-# SQLite 연결 (경로에 맞게 수정 필요)
-engine = create_engine("sqlite:///celebrities.db", echo=False)
+# ✅ DB 파일명 확인: 이름이 다르다면 여기서 수정하세요
+engine = create_engine("sqlite:///celebrities_full.db", echo=False)
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -29,10 +29,12 @@ def index():
                 next_birthday = next_birthday.replace(year=today.year + 1)
             days_to_birthday = (next_birthday - today).days
 
-            # 🔍 SQLite에서 같은 날 태어난 유명인 검색
+            # ✅ MM-DD만 추출해서 DB에서 비교
+            birth_mmdd = birth_str[-5:]
+
             with engine.connect() as conn:
-                query = text("SELECT name FROM celebrities WHERE birth_date = :bdate")
-                result_set = conn.execute(query, {"bdate": birth_str})
+                query = text("SELECT name FROM celebrities WHERE birth_mmdd = :mmdd")
+                result_set = conn.execute(query, {"mmdd": birth_mmdd})
                 celebrities = [row[0] for row in result_set]
 
             result = {
