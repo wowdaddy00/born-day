@@ -22,8 +22,8 @@
                 <p><span class="highlight">{{ result.birth_str }}</span>은 <span class="highlight">{{ result.weekday }}</span>이었습니다.</p>
                 <p>현재 만 나이: <span class="highlight">{{ result.age_years }}세</span></p>
                 <p>지금까지 살아온 날: <span class="highlight">{{ result.days_lived }}일</span></p>
-                <p>총 시간: <span class="highlight">{{ result.total_hours | number }}시간</span></p>
-                <p>총 분: <span class="highlight">{{ result.total_minutes | number }}분</span></p>
+                <p>총 시간: <span class="highlight">{{ "{:,}".format(result.total_hours) }}시간</span></p>
+                <p>총 분: <span class="highlight">{{ "{:,}".format(result.total_minutes) }}분</span></p>
                 <p>다음 생일까지 남은 날: <span class="highlight">{{ result.days_to_birthday }}일</span></p>
             </div>
         {% endif %}
