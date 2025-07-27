@@ -1,0 +1,54 @@
+body {
+    font-family: sans-serif;
+    text-align: center;
+    padding: 50px 20px;
+    background-color: #f7f9fc;
+    margin: 0;
+}
+
+input, button {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+form {
+    margin-bottom: 20px;
+}
+
+.result-card {
+    background: white;
+    max-width: 500px;
+    margin: 0 auto;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    text-align: left;
+}
+
+.result-card h3 {
+    margin-top: 0;
+    color: #333;
+}
+
+.highlight {
+    font-weight: bold;
+    color: #0055aa;
+}
+
+/* ✅ 반응형: 작은 화면에서 카드 내부 패딩 조정 */
+@media (max-width: 480px) {
+    .result-card {
+        padding: 15px;
+    }
+
+    input, button {
+        width: 100%;
+        margin-top: 8px;
+    }
+
+    body {
+        padding: 30px 10px;
+    }
+}
