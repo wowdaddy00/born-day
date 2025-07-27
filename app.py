@@ -46,11 +46,18 @@ def index():
                 result_set = conn.execute(query, {"mmdd": birth_mmdd})
                 celebrities = [row[0] for row in result_set]
 
+            zodiac_sign = get_zodiac_sign(birth_date.month, birth_date.day)
+            chinese_zodiac = get_chinese_zodiac(birth_date.year)
+            generation = get_generation(birth_date.year)
+            
             result = {
                 "birth_str": birth_str,
                 "weekday": weekday,
                 "age_years": age_years,
                 "korean_age": korean_age,
+                "zodiac_sign": zodiac_sign,
+                "chinese_zodiac": chinese_zodiac,
+                "generation": generation,
                 "days_lived": days_lived,
                 "total_hours": total_hours,
                 "total_minutes": total_minutes,
