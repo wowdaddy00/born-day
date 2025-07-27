@@ -14,16 +14,24 @@ def index():
     if request.method == "POST":
         birth_str = request.form["birthdate"]
         try:
-            birth_date = datetime.strptime(birth_str, "%Y-%m-%d").date()
+            year = int(request.form["year"])
+            month = int(request.form["month"])
+            day = int(request.form["day"])
+            birth_date = date(year, month, day)
+            birth_str = birth_date.strftime("%Y-%m-%d")
+           
             today = date.today()
             weekday_name = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"]
             weekday = weekday_name[birth_date.weekday()]
+            
             age_years = today.year - birth_date.year
             if (today.month, today.day) < (birth_date.month, birth_date.day):
                 age_years -= 1
+                
             days_lived = (today - birth_date).days
             total_hours = days_lived * 24
             total_minutes = total_hours * 60
+            
             next_birthday = birth_date.replace(year=today.year)
             if next_birthday < today:
                 next_birthday = next_birthday.replace(year=today.year + 1)
