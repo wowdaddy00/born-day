@@ -9,16 +9,15 @@ engine = create_engine("sqlite:///celebrities_full.db", echo=False)
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    result = None
-
+    result = {}
     if request.method == "POST":
-        birth_str = request.form["birthdate"]
+        year = request.form.get("year")
+        month = request.form.get("month")
+        day = request.form.get("day")
+        
         try:
-            year = int(request.form["year"])
-            month = int(request.form["month"])
-            day = int(request.form["day"])
-            birth_date = date(year, month, day)
-            birth_str = birth_date.strftime("%Y-%m-%d")
+            birth_str = f"{year}-{int(month):02d}-{int(day):02d}"
+            birth_date = datetime.strptime(birth_str, "%Y-%m-%d").date()
            
             today = date.today()
             weekday_name = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"]
