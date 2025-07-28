@@ -1,22 +1,27 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 from datetime import datetime, date
 from sqlalchemy import create_engine, text
+import json
+import os
 
 app = Flask(__name__)
 
-# ✅ DB 파일명 확인
+# DB 파일명 확인
 engine = create_engine("sqlite:///celebrities_full.db", echo=False)
+
+# 음악 및 영화 데이터 로드 (프론트엔드에서 직접 로드할 예정이므로, 여기서는 예시 경로만)
+# 실제 데이터는 static/data/music_movies.json 에 있다고 가정합니다.
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     result = {}
     if request.method == "POST":
-        # 🎯 드롭다운으로부터 값 받아오기
+        # 드롭다운으로부터 값 받아오기
         year = request.form.get("year")
         month = request.form.get("month")
         day = request.form.get("day")
 
-        # ✅ 유효성 검사
+        # 유효성 검사
         if not (year and month and day):
             result = {"error": "생년, 월, 일을 모두 선택해 주세요."}
             return render_template("index.html", result=result)
@@ -67,7 +72,9 @@ def index():
                 "total_hours": total_hours,
                 "total_minutes": total_minutes,
                 "days_to_birthday": days_to_birthday,
-                "celebrities": celebrities
+                "celebrities": celebrities,
+                "birth_year": birth_date.year, # 음악/영화 검색을 위해 연도 추가
+                "birth_month": birth_date.month # 음악/영화 검색을 위해 월 추가
             }
 
         except ValueError:
@@ -78,7 +85,7 @@ def index():
     return render_template("index.html", result=result)
 
 
-# 🌟 별자리 계산 함수
+# 별자리 계산 함수
 def get_zodiac_sign(month, day):
     zodiac = [
         ((1, 20), "염소자리"),
@@ -100,7 +107,7 @@ def get_zodiac_sign(month, day):
             return name
     return "염소자리"
 
-# 🐉 띠 계산 함수
+# 띠 계산 함수
 def get_chinese_zodiac(year):
     zodiacs = [
         "쥐", "소", "호랑이", "토끼", "용", "뱀",
@@ -108,7 +115,7 @@ def get_chinese_zodiac(year):
     ]
     return zodiacs[(year - 1900) % 12]
 
-# 👶 세대 구분 함수
+# 세대 구분 함수
 def get_generation(year):
     if year < 1946:
         return "세계대전 이전 세대"
