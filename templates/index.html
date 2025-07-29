@@ -236,21 +236,36 @@
                     </div>
                 {% endif %}
 
-                {% if result.billboard %}
+                <!-- 🎶 빌보드 1위 음악 결과를 표시할 영역 (Flask에서 직접 렌더링) -->
                 <div class="result-card">
-                    <h3>🎵 당신이 태어난 주의 Billboard 1위 곡</h3>
-                    <p><strong>{{ result.billboard.chart_date }}</strong> 기준</p>
-                    <p>곡명: <span class="highlight">{{ result.billboard.song }}</span></p>
-                    <p>아티스트: <span class="highlight">{{ result.billboard.performer }}</span></p>
-                    <p>
-                        <a href="{{ result.billboard.youtube }}" target="_blank">
-                            🔗 YouTube에서 듣기
-                        </a>
-                    </p>
+                    <h3>🎵 당신이 태어난 주에 가까운 Billboard 1위 곡</h3>
+                    <div id="billboard-music-results" class="video-container">
+                        {% if result.billboard_hit %}
+                            <div class="video-item">
+                                <h4>{{ result.billboard_hit.song }} - {{ result.billboard_hit.performer }}</h4>
+                                <p><strong>{{ result.billboard_hit.chart_date }}</strong> 기준</p>
+                                <div class="video-player">
+                                    <!-- 유튜브 링크에서 비디오 ID 추출하여 임베드 -->
+                                    <iframe src="https://www.youtube.com/embed/{{ result.billboard_hit.youtube | regex_replace('^.*v=([^&]+).*$', '\1') }}" 
+                                            title="{{ result.billboard_hit.song }} - {{ result.billboard_hit.performer}}" 
+                                            frameborder="0" 
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                            allowfullscreen>
+                                    </iframe>
+                                </div>
+                                <p class="mt-4">
+                                    <a href="{{ result.billboard_hit.youtube }}" target="_blank" class="text-blue-500 hover:underline">
+                                        🔗 YouTube에서 듣기
+                                    </a>
+                                </p>
+                            </div>
+                        {% else %}
+                            <p class="text-gray-600 text-center">해당 날짜의 빌보드 1위 음악 데이터를 찾을 수 없습니다.</p>
+                        {% endif %}
+                    </div>
                 </div>
-                {% endif %}
 
-                <!-- 음악 및 영화 결과를 표시할 영역 -->
+                <!-- 🎬 영화 결과를 표시할 영역 (JavaScript로 로드) -->
                 <div class="result-card">
                     <h3>🎬 당신이 태어난 해의 인기 영화</h3>
                     <div id="movie-results" class="video-container">
@@ -263,9 +278,26 @@
         {% endif %}
     </div>
 
+    <!-- Flask에서 전달된 result 데이터를 안전하게 JavaScript로 전달하기 위한 스크립트 태그 -->
+    <script id="result-data" type="application/json">
+        {{ result | tojson | safe }}
+    </script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const resultData = {{ result | tojson }}; // Flask에서 전달된 결과 데이터를 JavaScript 변수로 가져옴
+            // 새로 추가된 스크립트 태그에서 JSON 데이터를 읽어옴
+            const dataScript = document.getElementById('result-data');
+            let resultData = {};
+            if (dataScript && dataScript.textContent) {
+                try {
+                    resultData = JSON.parse(dataScript.textContent);
+                } catch (e) {
+                    console.error("Error parsing resultData from script tag:", e);
+                    // 오류 발생 시 resultData를 비워두어 오류 메시지가 표시되도록 함
+                    resultData = { error: "데이터 로드 중 오류가 발생했습니다." };
+                }
+            }
+
 
             // 드롭다운 기본값 설정 (선택된 값 유지)
             if (resultData && !resultData.error) {
@@ -277,14 +309,16 @@
                 }
             }
 
-            if (resultData && !resultData.error && resultData.birth_year && resultData.birth_month) {
+            // 영화 데이터만 로드 (음악은 Flask에서 직접 처리)
+            if (resultData && !resultData.error && resultData.birth_year) {
                 const birthYear = resultData.birth_year;
-                const birthMonth = resultData.birth_month;
+                
+                const movieResultsDiv = document.getElementById('movie-results');
+                const noMovieData = document.getElementById('no-movie-data');
 
-                // 음악 및 영화 데이터 로드
                 // 이 경로는 실제 GitHub Pages 또는 Render에 배포했을 때의 경로에 맞춰야 합니다.
                 // 여기서는 Flask의 static 폴더 내 data/music_movies.json 에 있다고 가정합니다.
-                fetch('/static/data/music_movies.json')
+                fetch('/static/data/music_movies.json') // 또는 music_movies_full.json, music_movies_2024_example.json
                     .then(response => {
                         if (!response.ok) {
                             throw new Error('Network response was not ok ' + response.statusText);
@@ -292,89 +326,55 @@
                         return response.json();
                     })
                     .then(data => {
-                        displayMusicAndMovies(birthYear, birthMonth, data);
+                        displayMovies(birthYear, data);
                     })
                     .catch(error => {
-                        console.error('Error loading music and movie data:', error);
-                        document.getElementById('no-music-data').textContent = '음악 데이터를 로드하는 데 실패했습니다.';
-                        document.getElementById('no-music-data').classList.remove('hidden');
-                        document.getElementById('no-movie-data').textContent = '영화 데이터를 로드하는 데 실패했습니다.';
-                        document.getElementById('no-movie-data').classList.remove('hidden');
+                        console.error('Error loading movie data:', error);
+                        noMovieData.textContent = '영화 데이터를 로드하는 데 실패했습니다.';
+                        noMovieData.classList.remove('hidden');
                     });
             }
 
-            function displayMusicAndMovies(year, month, data) {
-                const musicResultsDiv = document.getElementById('music-results');
+            function displayMovies(year, data) {
                 const movieResultsDiv = document.getElementById('movie-results');
-                const noMusicData = document.getElementById('no-music-data');
                 const noMovieData = document.getElementById('no-movie-data');
-
-                let musicFound = false;
+                
                 let movieFound = false;
+                movieResultsDiv.innerHTML = ''; // 기존 내용 삭제
 
-                // 해당 연도와 월의 데이터를 찾음
-                const yearData = data.find(item => item.year === year);
+                // 해당 연도의 데이터를 찾음 (월별 데이터는 영화에서는 크게 중요하지 않을 수 있음)
+                // 여기서는 연도만 매칭하여 해당 연도의 모든 영화를 표시합니다.
+                const yearData = data.filter(item => item.year === year);
 
-                if (yearData) {
-                    // 음악 데이터 표시
-                    if (yearData.music && yearData.music.length > 0) {
-                        musicResultsDiv.innerHTML = ''; // 기존 내용 삭제
-                        yearData.music.forEach(music => {
-                            const videoId = getYouTubeVideoId(music.youtube_link);
-                            if (videoId) {
-                                musicFound = true;
-                                const musicItem = document.createElement('div');
-                                musicItem.className = 'video-item';
-                                musicItem.innerHTML = `
-                                    <h4>${music.title} - ${music.artist}</h4>
-                                    <p>${year}년 ${month}월</p>
-                                    <div class="video-player">
-                                        <iframe src="https://www.youtube.com/embed/${videoId}" 
-                                                title="${music.title} - ${music.artist}" 
-                                                frameborder="0" 
-                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                                allowfullscreen>
-                                        </iframe>
-                                    </div>
-                                `;
-                                musicResultsDiv.appendChild(musicItem);
-                            }
-                        });
-                    }
-
-                    // 영화 데이터 표시
-                    if (yearData.movies && yearData.movies.length > 0) {
-                        movieResultsDiv.innerHTML = ''; // 기존 내용 삭제
-                        yearData.movies.forEach(movie => {
-                            const videoId = getYouTubeVideoId(movie.youtube_link);
-                            if (videoId) {
-                                movieFound = true;
-                                const movieItem = document.createElement('div');
-                                movieItem.className = 'video-item';
-                                movieItem.innerHTML = `
-                                    <h4>${movie.title}</h4>
-                                    <p>${year}년 ${month}월</p>
-                                    <div class="video-player">
-                                        <iframe src="https://www.youtube.com/embed/${videoId}" 
-                                                title="${movie.title}" 
-                                                frameborder="0" 
-                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                                allowfullscreen>
-                                        </iframe>
-                                    </div>
-                                `;
-                                movieResultsDiv.appendChild(movieItem);
-                            }
-                        });
-                    }
+                if (yearData.length > 0) {
+                    yearData.forEach(monthItem => { // 각 월별 항목을 순회
+                        if (monthItem.movies && monthItem.movies.length > 0) {
+                            monthItem.movies.forEach(movie => {
+                                const videoId = getYouTubeVideoId(movie.youtube_link);
+                                if (videoId) {
+                                    movieFound = true;
+                                    const movieItem = document.createElement('div');
+                                    movieItem.className = 'video-item';
+                                    movieItem.innerHTML = `
+                                        <h4>${movie.title}</h4>
+                                        <p>${monthItem.year}년 ${monthItem.month}월</p>
+                                        <div class="video-player">
+                                            <iframe src="https://www.youtube.com/embed/${videoId}" 
+                                                    title="${movie.title}" 
+                                                    frameborder="0" 
+                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                                    allowfullscreen>
+                                            </iframe>
+                                        </div>
+                                    `;
+                                    movieResultsDiv.appendChild(movieItem);
+                                }
+                            });
+                        }
+                    });
                 }
 
                 // 데이터가 없을 경우 메시지 표시
-                if (!musicFound) {
-                    noMusicData.classList.remove('hidden');
-                } else {
-                    noMusicData.classList.add('hidden');
-                }
                 if (!movieFound) {
                     noMovieData.classList.remove('hidden');
                 } else {
