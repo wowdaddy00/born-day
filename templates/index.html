@@ -317,8 +317,8 @@
                 const noMovieData = document.getElementById('no-movie-data');
 
                 // 이 경로는 실제 GitHub Pages 또는 Render에 배포했을 때의 경로에 맞춰야 합니다.
-                // 여기서는 Flask의 static 폴더 내 data/music_movies.json 에 있다고 가정합니다.
-                fetch('/static/data/music_movies.json') // 또는 music_movies_full.json, music_movies_2024_example.json
+                // 경로 변경: static/data/ -> static/
+                fetch('/static/music_movies.json') 
                     .then(response => {
                         if (!response.ok) {
                             throw new Error('Network response was not ok ' + response.statusText);
