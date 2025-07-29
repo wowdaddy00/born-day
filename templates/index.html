@@ -236,15 +236,21 @@
                     </div>
                 {% endif %}
 
-                <!-- 음악 및 영화 결과를 표시할 영역 -->
+                {% if result.billboard %}
                 <div class="result-card">
-                    <h3>🎶 당신이 태어난 해의 인기 음악</h3>
-                    <div id="music-results" class="video-container">
-                        <!-- JavaScript로 음악 비디오가 여기에 삽입됩니다 -->
-                        <p id="no-music-data" class="text-gray-600 text-center hidden">해당 연도의 음악 데이터를 찾을 수 없습니다.</p>
-                    </div>
+                    <h3>🎵 당신이 태어난 주의 Billboard 1위 곡</h3>
+                    <p><strong>{{ result.billboard.chart_date }}</strong> 기준</p>
+                    <p>곡명: <span class="highlight">{{ result.billboard.song }}</span></p>
+                    <p>아티스트: <span class="highlight">{{ result.billboard.performer }}</span></p>
+                    <p>
+                        <a href="{{ result.billboard.youtube }}" target="_blank">
+                            🔗 YouTube에서 듣기
+                        </a>
+                    </p>
                 </div>
+                {% endif %}
 
+                <!-- 음악 및 영화 결과를 표시할 영역 -->
                 <div class="result-card">
                     <h3>🎬 당신이 태어난 해의 인기 영화</h3>
                     <div id="movie-results" class="video-container">
