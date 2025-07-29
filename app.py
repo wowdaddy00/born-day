@@ -3,14 +3,52 @@ from datetime import datetime, date
 from sqlalchemy import create_engine, text
 import json
 import os
+import pandas as pd # pandas 라이브러리 임포트
 
 app = Flask(__name__)
 
-# DB 파일명 확인
+# ✅ DB 파일명 확인
 engine = create_engine("sqlite:///celebrities_full.db", echo=False)
 
-# 음악 및 영화 데이터 로드 (프론트엔드에서 직접 로드할 예정이므로, 여기서는 예시 경로만)
-# 실제 데이터는 static/data/music_movies.json 에 있다고 가정합니다.
+# --- 새로운 코드 추가 시작 ---
+# CSV 데이터 로드 (앱 시작 시 한 번만 로드)
+BILLBOARD_CSV_PATH = "static/data/Billboard_Weekly_No1_with_Youtube.csv"
+try:
+    # Flask 앱의 루트 디렉토리를 기준으로 경로 설정
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    full_csv_path = os.path.join(base_dir, BILLBOARD_CSV_PATH)
+    billboard_df = pd.read_csv(full_csv_path)
+    billboard_df["chart_date"] = pd.to_datetime(billboard_df["chart_date"])
+    print(f"Billboard CSV loaded successfully from: {full_csv_path}")
+except FileNotFoundError:
+    billboard_df = pd.DataFrame() # 파일이 없으면 빈 DataFrame 생성
+    print(f"Error: Billboard CSV file not found at {full_csv_path}. Please ensure it exists.")
+except Exception as e:
+    billboard_df = pd.DataFrame()
+    print(f"Error loading Billboard CSV: {e}")
+
+def get_billboard_hit(birthdate):
+    # birthdate: datetime.date 객체
+    if billboard_df.empty:
+        return None # DataFrame이 비어있으면 데이터 없음
+        
+    birth_ts = pd.Timestamp(birthdate)
+    
+    # birthdate보다 같거나 이전의 chart_date 중 가장 가까운 것
+    # 내림차순 정렬 후 첫 번째 (가장 가까운 과거 날짜)
+    filtered = billboard_df[billboard_df["chart_date"] <= birth_ts].sort_values(by="chart_date", ascending=False)
+    
+    if not filtered.empty:
+        nearest = filtered.iloc[0] # 가장 가까운 과거 날짜의 데이터
+        return {
+            "chart_date": nearest["chart_date"].strftime("%Y-%m-%d"),
+            "song": nearest["song"],
+            "performer": nearest["performer"],
+            "youtube": nearest["youtube_search_link"]
+        }
+    return None
+# --- 새로운 코드 추가 끝 ---
+
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -21,7 +59,7 @@ def index():
         month = request.form.get("month")
         day = request.form.get("day")
 
-        # 유효성 검사
+        # ✅ 유효성 검사
         if not (year and month and day):
             result = {"error": "생년, 월, 일을 모두 선택해 주세요."}
             return render_template("index.html", result=result)
@@ -60,6 +98,10 @@ def index():
             chinese_zodiac = get_chinese_zodiac(birth_date.year)
             generation = get_generation(birth_date.year)
 
+            # --- 빌보드 1위 곡 정보 추가 ---
+            billboard_hit = get_billboard_hit(birth_date)
+            # --- 빌보드 1위 곡 정보 추가 끝 ---
+
             result = {
                 "birth_str": birth_str,
                 "weekday": weekday,
@@ -73,8 +115,9 @@ def index():
                 "total_minutes": total_minutes,
                 "days_to_birthday": days_to_birthday,
                 "celebrities": celebrities,
-                "birth_year": birth_date.year, # 음악/영화 검색을 위해 연도 추가
-                "birth_month": birth_date.month # 음악/영화 검색을 위해 월 추가
+                "birth_year": birth_date.year,
+                "birth_month": birth_date.month,
+                "billboard_hit": billboard_hit # 빌보드 1위 곡 정보 추가
             }
 
         except ValueError:
@@ -85,7 +128,7 @@ def index():
     return render_template("index.html", result=result)
 
 
-# 별자리 계산 함수
+# 🌟 별자리 계산 함수
 def get_zodiac_sign(month, day):
     zodiac = [
         ((1, 20), "염소자리"),
@@ -107,7 +150,7 @@ def get_zodiac_sign(month, day):
             return name
     return "염소자리"
 
-# 띠 계산 함수
+# 🐉 띠 계산 함수
 def get_chinese_zodiac(year):
     zodiacs = [
         "쥐", "소", "호랑이", "토끼", "용", "뱀",
@@ -115,7 +158,7 @@ def get_chinese_zodiac(year):
     ]
     return zodiacs[(year - 1900) % 12]
 
-# 세대 구분 함수
+# 👶 세대 구분 함수
 def get_generation(year):
     if year < 1946:
         return "세계대전 이전 세대"
