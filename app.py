@@ -3,9 +3,16 @@ from datetime import datetime, date
 from sqlalchemy import create_engine, text
 import json
 import os
-import pandas as pd # pandas 라이브러리 임포트
+import pandas as pd
 
 app = Flask(__name__)
+
+# Jinja2 환경 설정 및 커스텀 필터 추가 (app.py에 추가할 내용)
+from jinja2 import Environment, FileSystemLoader
+def regex_replace_filter(s, pattern, repl):
+    import re
+    return re.sub(pattern, repl, s)
+app.jinja_env.filters['regex_replace'] = regex_replace_filter
 
 # ✅ DB 파일명 확인
 engine = create_engine("sqlite:///celebrities_full.db", echo=False)
@@ -17,36 +24,34 @@ try:
     # Flask 앱의 루트 디렉토리를 기준으로 경로 설정
     base_dir = os.path.abspath(os.path.dirname(__file__))
     full_csv_path = os.path.join(base_dir, BILLBOARD_CSV_PATH)
+    
+    # --- 디버깅 출력 추가 ---
+    print(f"DEBUG: base_dir is {base_dir}")
+    print(f"DEBUG: full_csv_path is {full_csv_path}")
+
+    if not os.path.exists(full_csv_path):
+        print(f"DEBUG: File DOES NOT exist at {full_csv_path}")
+        billboard_df = pd.DataFrame()
+        raise FileNotFoundError(f"CSV file not found at: {full_csv_path}")
+    
+    if os.path.isdir(full_csv_path):
+        print(f"DEBUG: Path {full_csv_path} IS a directory. This is unexpected for a CSV.")
+        billboard_df = pd.DataFrame()
+        raise IsADirectoryError(f"Expected file but found directory at: {full_csv_path}")
+    # --- 디버깅 출력 끝 ---
+
     billboard_df = pd.read_csv(full_csv_path)
     billboard_df["chart_date"] = pd.to_datetime(billboard_df["chart_date"])
     print(f"Billboard CSV loaded successfully from: {full_csv_path}")
 except FileNotFoundError:
     billboard_df = pd.DataFrame() # 파일이 없으면 빈 DataFrame 생성
     print(f"Error: Billboard CSV file not found at {full_csv_path}. Please ensure it exists.")
+except IsADirectoryError as e:
+    billboard_df = pd.DataFrame()
+    print(f"Error: {e}. Please check if '{BILLBOARD_CSV_PATH}' is accidentally a directory in your repository.")
 except Exception as e:
     billboard_df = pd.DataFrame()
     print(f"Error loading Billboard CSV: {e}")
-
-def get_billboard_hit(birthdate):
-    # birthdate: datetime.date 객체
-    if billboard_df.empty:
-        return None # DataFrame이 비어있으면 데이터 없음
-        
-    birth_ts = pd.Timestamp(birthdate)
-    
-    # birthdate보다 같거나 이전의 chart_date 중 가장 가까운 것
-    # 내림차순 정렬 후 첫 번째 (가장 가까운 과거 날짜)
-    filtered = billboard_df[billboard_df["chart_date"] <= birth_ts].sort_values(by="chart_date", ascending=False)
-    
-    if not filtered.empty:
-        nearest = filtered.iloc[0] # 가장 가까운 과거 날짜의 데이터
-        return {
-            "chart_date": nearest["chart_date"].strftime("%Y-%m-%d"),
-            "song": nearest["song"],
-            "performer": nearest["performer"],
-            "youtube": nearest["youtube_search_link"]
-        }
-    return None
 # --- 새로운 코드 추가 끝 ---
 
 
