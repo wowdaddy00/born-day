@@ -19,7 +19,8 @@ engine = create_engine("sqlite:///celebrities_full.db", echo=False)
 
 # --- 새로운 코드 추가 시작 ---
 # CSV 데이터 로드 (앱 시작 시 한 번만 로드)
-BILLBOARD_CSV_PATH = "static/data/Billboard_Weekly_No1_with_Youtube.csv"
+# 경로 변경: static/data/ -> static/
+BILLBOARD_CSV_PATH = "static/Billboard_Weekly_No1_with_Youtube.csv" 
 try:
     # Flask 앱의 루트 디렉토리를 기준으로 경로 설정
     base_dir = os.path.abspath(os.path.dirname(__file__))
