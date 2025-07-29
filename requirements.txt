@@ -1,4 +1,4 @@
-Flask==2.2.5
-gunicorn==20.1.0
-sqlalchemy==1.4.52
-
+Flask==2.3.2 # 사용하시는 Flask 버전에 맞춰 조정 가능
+SQLAlchemy==2.0.19 # 사용하시는 SQLAlchemy 버전에 맞춰 조정 가능
+pandas==2.0.3 # 사용하시는 pandas 버전에 맞춰 조정 가능
+gunicorn==20.1.0 # Render에서 웹 서버로 사용
